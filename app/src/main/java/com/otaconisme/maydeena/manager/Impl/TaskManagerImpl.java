@@ -11,6 +11,7 @@ import com.otaconisme.maydeena.manager.TaskManager;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -26,7 +27,7 @@ public class TaskManagerImpl implements TaskManager {
     private final String TAG = "TaskManager";
 
     //TODO think of a better way of putting this data
-    private final Map<UUID, Task> allTasks = new HashMap<>();
+    private static Map<UUID, Task> allTasks = new HashMap<>();
 
     private static AppDatabase db = null;
 
@@ -34,6 +35,21 @@ public class TaskManagerImpl implements TaskManager {
 
     private TaskManagerImpl(AppDatabase db) {
         this.db = db;
+        if (db != null) {
+            loadFromDB();
+            refreshParentChildRelation();
+        }
+    }
+
+    private void loadFromDB() {
+        try {
+            List<Task> allDBTasks = new GetAllFromDatabaseAsyncTask().execute().get();
+            for (Task task : allDBTasks) {
+                allTasks.put(task.getId(), task);
+            }
+        } catch (Exception e) {
+            //TODO
+        }
     }
 
     public static TaskManagerImpl getInstance(AppDatabase db) {
@@ -160,10 +176,10 @@ public class TaskManagerImpl implements TaskManager {
         return task;
     }
 
-    private boolean removeChildTask(Task task, Task childTask) {
+    private boolean removeChildTaskLink(Task task, Task childTask) {
         Set<UUID> children = task.getChildren();
         if (task != null && children.contains(childTask.getId()) && childTask.getId() != null) {
-            if(children.remove(childTask.getId())){
+            if (children.remove(childTask.getId())) {
                 task.setChildren(children);
                 return true;
             }
@@ -190,13 +206,13 @@ public class TaskManagerImpl implements TaskManager {
             if (level == 0) {
                 Task parentTask = getTask(task.getParent());
                 if (parentTask != null) {
-                    if (removeChildTask(parentTask, task)) {
+                    if (removeChildTaskLink(parentTask, task)) {
                         updateAllParentProgress(getTask(task.getParent()));
                     } else {
                         Log.e(TAG, "Failed to remove child[" + task.getId() + "] to task[" + parentTask.getId() + "]");
                     }
                 } else {
-                    if (!removeChildTask(rootTask, task)) {
+                    if (!removeChildTaskLink(rootTask, task)) {
                         Log.e(TAG, "Failed to remove child[" + task.getId() + "] to rootTask");
                     }
                 }
@@ -275,6 +291,7 @@ public class TaskManagerImpl implements TaskManager {
 
     public void refreshParentChildRelation() {
         Map<UUID, Set<UUID>> parentChildRelation = new HashMap<>();
+        Set<UUID> mainTasks = new HashSet<>();
         for (Map.Entry<UUID, Task> entry : allTasks.entrySet()) {
             UUID taskId = entry.getKey();
             Task task = entry.getValue();
@@ -282,18 +299,24 @@ public class TaskManagerImpl implements TaskManager {
             if (taskId != task.getId()) {
                 Log.e(TAG, "id mismatch");
             } else {
-                UUID parent = task.getParent();
-                Set<UUID> children;
-                if (parentChildRelation.get(parent) == null) {
-                    children = new HashSet<>();
-                } else {
-                    children = parentChildRelation.get(parent);
+                //link task to parent task
+                if(task.getParent()!=null) {
+                    UUID parent = task.getParent();
+                    Set<UUID> children;
+                    if (parentChildRelation.get(parent) == null) {
+                        children = new HashSet<>();
+                    } else {
+                        children = parentChildRelation.get(parent);
+                    }
+                    children.add(task.getId());
+                    parentChildRelation.put(parent, children);
+                }else{
+                    mainTasks.add(task.getId());
                 }
-                children.add(task.getId());
-                parentChildRelation.put(parent, children);
             }
         }
 
+        getRootTask().setChildren(mainTasks);
         for (Map.Entry<UUID, Set<UUID>> entry : parentChildRelation.entrySet()) {
             UUID parent = entry.getKey();
             Set<UUID> children = entry.getValue();
@@ -304,19 +327,26 @@ public class TaskManagerImpl implements TaskManager {
         calculateProgress(getRootTask());
     }
 
-    class InsertToDatabaseAsyncTask extends AsyncTask<Task, Integer, Long> {
+    static class InsertToDatabaseAsyncTask extends AsyncTask<Task, Integer, Long> {
         @Override
-        protected Long doInBackground(Task ... tasks) {
+        protected Long doInBackground(Task... tasks) {
             db.getTaskDao().insertTask(tasks[0]);
             return null;
         }
     }
 
-    class DeleteToDatabaseAsyncTask extends AsyncTask<Task, Integer, Long> {
+    static class DeleteToDatabaseAsyncTask extends AsyncTask<Task, Integer, Long> {
         @Override
-        protected Long doInBackground(Task ... tasks) {
+        protected Long doInBackground(Task... tasks) {
             db.getTaskDao().deleteTask(tasks[0]);
             return null;
+        }
+    }
+
+    static class GetAllFromDatabaseAsyncTask extends AsyncTask<Void, Integer, List<Task>> {
+        @Override
+        protected List<Task> doInBackground(Void... voids) {
+            return db.getTaskDao().getAllTasks();
         }
     }
 }
