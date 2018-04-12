@@ -29,7 +29,7 @@ public class SingletonTest {
     }
 
     @Test
-    public void taskManagerSingleton() throws Exception {
+    public void taskManagerSingleton() {
         TaskManager taskManager_01 = TaskManagerImpl.getInstance(db);
         TaskManager taskManager_02 = TaskManagerImpl.getInstance(db);
 

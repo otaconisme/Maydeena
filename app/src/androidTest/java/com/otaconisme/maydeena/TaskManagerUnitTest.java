@@ -1,5 +1,8 @@
 package com.otaconisme.maydeena;
 
+import android.arch.persistence.db.SupportSQLiteOpenHelper;
+import android.arch.persistence.room.DatabaseConfiguration;
+import android.arch.persistence.room.InvalidationTracker;
 import android.arch.persistence.room.Room;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
@@ -10,6 +13,7 @@ import com.otaconisme.maydeena.enums.TaskProgressEnum;
 import com.otaconisme.maydeena.enums.TaskWeightEnum;
 import com.otaconisme.maydeena.manager.Impl.TaskManagerImpl;
 import com.otaconisme.maydeena.manager.TaskManager;
+import com.otaconisme.maydeena.persistence.dao.TaskDao;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -33,12 +37,15 @@ import static org.junit.Assert.assertEquals;
 @RunWith(AndroidJUnit4.class)
 public class TaskManagerUnitTest {
     private final double double_delta = 0.0000001;
-    private AppDatabase db;
     private TaskManager taskManager;
+
+
+
 
     @Before
     public void initialize() {
-        db = Room.inMemoryDatabaseBuilder(InstrumentationRegistry.getTargetContext(), AppDatabase.class).build();
+        AppDatabase db = Room.inMemoryDatabaseBuilder(InstrumentationRegistry.getTargetContext(), AppDatabase.class).build();
+
         taskManager = TaskManagerImpl.getInstance(db);
     }
 
@@ -46,7 +53,7 @@ public class TaskManagerUnitTest {
     public ExpectedException thrown = ExpectedException.none();
 
     @Test
-    public void createMainTask() throws Exception {
+    public void createMainTask() {
         String taskTitle = "My Task";
         Task task = taskManager.createTask(taskTitle);
         double progress = 0.0;
@@ -60,7 +67,7 @@ public class TaskManagerUnitTest {
     }
 
     @Test
-    public void createChildTask() throws Exception {
+    public void createChildTask() {
         Task parenTask = taskManager.createTask("parent task");
         int number_of_children = 3;
         for (int i = 0; i < number_of_children; i++) {
@@ -72,7 +79,7 @@ public class TaskManagerUnitTest {
     }
 
     @Test
-    public void deleteTask() throws Exception {
+    public void deleteTask() {
         Task task = taskManager.createTask("toBeDeleted");
         Task checkTask = taskManager.getTask(task.getId());
         assertEquals(true, task.equals(checkTask));
@@ -84,7 +91,7 @@ public class TaskManagerUnitTest {
     }
 
     @Test
-    public void setProgressDoneUndone() throws Exception {
+    public void setProgressDoneUndone() {
         Task parent = taskManager.createTask("parent");
         Task child = taskManager.createTask("child", parent);
 
@@ -126,7 +133,7 @@ public class TaskManagerUnitTest {
     }
 
     @Test
-    public void switchParentTask() throws Exception {
+    public void switchParentTask() {
         Task parent01 = taskManager.createTask("parent01");
         Task parent02 = taskManager.createTask("parent02");
         Task child = taskManager.createTask("child", parent01);
@@ -152,7 +159,7 @@ public class TaskManagerUnitTest {
     }
 
     @Test
-    public void getRootTask() throws Exception {
+    public void getRootTask() {
         Task rootTask = taskManager.getRootTask();
         assertEquals(null, rootTask.getId());
         assertEquals(null, rootTask.getParent());

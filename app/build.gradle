@@ -63,6 +63,6 @@ dependencies {
 //    can be used together with room. not sure if needed
     implementation "android.arch.paging:runtime:1.0.0-alpha4-1"
 
-    compile 'com.google.guava:guava:23.3-android'
+    implementation 'com.google.guava:guava:23.3-android'
 
 }

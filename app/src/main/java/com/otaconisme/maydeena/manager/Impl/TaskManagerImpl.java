@@ -1,5 +1,6 @@
 package com.otaconisme.maydeena.manager.Impl;
 
+import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -24,7 +25,7 @@ import static com.otaconisme.maydeena.dto.Task.rootTask;
  */
 
 public class TaskManagerImpl implements TaskManager {
-    private final String TAG = "TaskManager";
+    private final String TAG = getClass().getSimpleName();
 
     //TODO think of a better way of putting this data
     private static Map<UUID, Task> allTasks = new HashMap<>();
@@ -34,8 +35,8 @@ public class TaskManagerImpl implements TaskManager {
     private static TaskManagerImpl instance = null;
 
     private TaskManagerImpl(AppDatabase db) {
-        this.db = db;
         if (db != null) {
+            this.db = db;
             loadFromDB();
             refreshParentChildRelation();
         }
@@ -52,6 +53,15 @@ public class TaskManagerImpl implements TaskManager {
         }
     }
 
+    public static TaskManagerImpl getInstance(Context context) {
+        if (instance == null) {
+            db = AppDatabase.getInstance(context);
+            instance = new TaskManagerImpl(db);
+        }
+        return instance;
+    }
+
+    //TODO do singleton mock for unit test
     public static TaskManagerImpl getInstance(AppDatabase db) {
         if (instance == null) {
             instance = new TaskManagerImpl(db);
@@ -300,7 +310,7 @@ public class TaskManagerImpl implements TaskManager {
                 Log.e(TAG, "id mismatch");
             } else {
                 //link task to parent task
-                if(task.getParent()!=null) {
+                if (task.getParent() != null) {
                     UUID parent = task.getParent();
                     Set<UUID> children;
                     if (parentChildRelation.get(parent) == null) {
@@ -310,7 +320,7 @@ public class TaskManagerImpl implements TaskManager {
                     }
                     children.add(task.getId());
                     parentChildRelation.put(parent, children);
-                }else{
+                } else {
                     mainTasks.add(task.getId());
                 }
             }

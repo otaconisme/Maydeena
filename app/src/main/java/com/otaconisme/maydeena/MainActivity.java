@@ -9,7 +9,6 @@ import android.view.MenuItem;
 import android.widget.ListView;
 
 import com.otaconisme.maydeena.adapter.MainListAdapter;
-import com.otaconisme.maydeena.db.AppDatabase;
 import com.otaconisme.maydeena.dto.Task;
 import com.otaconisme.maydeena.manager.Impl.TaskManagerImpl;
 import com.otaconisme.maydeena.manager.TaskManager;
@@ -20,8 +19,12 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
     TaskManager taskManager;
-    List<Task> currentTaskList;
+    static List<Task> currentTaskList;
     MainListAdapter mainListAdapter;
+
+    public static void setCurrentTaskList(List<Task> newTaskList) {
+        currentTaskList = newTaskList;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,10 +72,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void init() {
-
-        AppDatabase db = AppDatabase.getInstance(getApplicationContext());
-        taskManager = TaskManagerImpl.getInstance(db);
-
-        Task task = taskManager.createTask("buat kerja baik");
+        taskManager = TaskManagerImpl.getInstance(getApplicationContext());
     }
 }
