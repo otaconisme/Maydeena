@@ -1,6 +1,7 @@
 package com.otaconisme.maydeena.adapter;
 
 import android.content.Context;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -54,18 +55,20 @@ public class MainListAdapter extends BaseAdapter {
 
         EditText taskTitleText = view.findViewById(R.id.task_title_text);
         taskTitleText.setText(list.get(i).getTitle());
-
         taskTitleText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
                 if (!hasFocus) {
-                    if(!taskTitleText.getText().toString().isEmpty()) {
-                        taskManager.setTitle(list.get(i), taskTitleText.getText().toString());
+                    if (!taskTitleText.getText().toString().isEmpty()) {
+                        if (list.size() > 0) {
+                            taskManager.setTitle(list.get(i), taskTitleText.getText().toString());
+                        }
                     }
                 }
             }
 
         });
+
 
         Button taskDeleteButton = view.findViewById(R.id.task_delete_button);
         if (taskDeleteButton != null) {
@@ -83,4 +86,6 @@ public class MainListAdapter extends BaseAdapter {
 
         return view;
     }
+
+
 }
